@@ -86,6 +86,7 @@ CacheConfig::CacheConfig(const folly::dynamic& configJson) {
   JSONSetVal(configJson, mhMinModelSampleSize);
   JSONSetVal(configJson, mhBufferSize);
   JSONSetVal(configJson, lamaMinThreshold);
+  JSONSetVal(configJson, footprintBufferSize);
   JSONSetVal(configJson, thresholdAI);
   JSONSetVal(configJson, thresholdMI);
   JSONSetVal(configJson, thresholdAD);
