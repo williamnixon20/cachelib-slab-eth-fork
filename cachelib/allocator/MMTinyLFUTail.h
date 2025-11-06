@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+ // Our custom implementation, TinyLFU with tail queue supported. Marginal-hits
+// needs this
 #pragma once
 
 #include <atomic>

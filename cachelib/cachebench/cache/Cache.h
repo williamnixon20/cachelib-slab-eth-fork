@@ -331,6 +331,8 @@ class Cache {
 
   void wakeupPoolRebalancer(bool synchronousOp, uint64_t request_id) {
     // synchronously
+    printf("Waking up rebalancer from Cache.h\n");
+    printf("Synchronous: %d, request_id: %lu\n", synchronousOp, request_id);
     cache_->wakeupPoolRebalancer(synchronousOp, request_id);
   }
 
@@ -612,6 +614,13 @@ inline typename TinyLFUAllocator::MMConfig makeMMConfig(
       config.lruRefreshSec, config.lruUpdateOnWrite, config.lruUpdateOnRead);
 }
 
+template <>
+inline typename S3FIFOAllocator::MMConfig makeMMConfig(
+    CacheConfig const& config) {
+  return S3FIFOAllocator::MMConfig(
+      config.lruRefreshSec, config.lruUpdateOnWrite, config.lruUpdateOnRead);
+}
+
 // TinyLFUTail
 // todo: add more parameter for lfu (see MMTinyLFU.h)
 template <>
@@ -690,29 +699,21 @@ Cache<Allocator>::Cache(const CacheConfig& config,
     allocatorConfig_.footprintBufferSize = config_.footprintBufferSize;
   }
   XLOGF(INFO, "Using rebalance interval: {}", config_.poolRebalanceIntervalSec);
-  allocatorConfig_.enablePoolRebalancing(
-      config_.getRebalanceStrategy(),
-      std::chrono::seconds(config_.poolRebalanceIntervalSec),
-      config_.poolRebalancerDisableForcedWakeUp);
+  auto rebalanceStrategy = config_.getRebalanceStrategy();
+  if (rebalanceStrategy) {
+    allocatorConfig_.enablePoolRebalancing(
+        config_.getRebalanceStrategy(),
+        std::chrono::seconds(config_.poolRebalanceIntervalSec),
+        config_.poolRebalancerDisableForcedWakeUp);
+    allocatorConfig_.poolRebalancerFreeAllocThreshold =
+        config_.poolRebalancerFreeAllocThreshold;
+    allocatorConfig_.countColdTailHitsOnly = config_.countColdTailHitsOnly;
+    allocatorConfig_.tailSlabCnt = config_.tailSlabCnt;
+    allocatorConfig_.enableShardsMrc = config_.enableShardsMrc;
+  }
   // disable reaper thread
   allocatorConfig_.enableItemReaperInBackground(std::chrono::milliseconds(0));
 
-  allocatorConfig_.poolRebalancerFreeAllocThreshold =
-      config_.poolRebalancerFreeAllocThreshold;
-  allocatorConfig_.countColdTailHitsOnly = config_.countColdTailHitsOnly;
-  allocatorConfig_.tailSlabCnt = config_.tailSlabCnt;
-  allocatorConfig_.enableShardsMrc = config_.enableShardsMrc;
-
-  // if (config_.moveOnSlabRelease && movingSync != nullptr) {
-  //   XLOGF(INFO, "Enabling moving on slab release");
-  //   allocatorConfig_.enableMovingOnSlabRelease(
-  //       [](Item& oldItem, Item& newItem, Item* parentPtr) {
-  //         XDCHECK(oldItem.isChainedItem() == (parentPtr != nullptr));
-  //         std::memcpy(newItem.getMemory(), oldItem.getMemory(),
-  //                     oldItem.getSize());
-  //       },
-  //       movingSync);
-  // }
 
   if (config_.moveOnSlabRelease) {
     XLOGF(INFO, "Enabling moving on slab release");
@@ -971,14 +972,19 @@ Cache<Allocator>::Cache(const CacheConfig& config,
     }
   }
 
-  // if (config_.rebalanceStrategy == "disabled") {
-  //   XLOG(INFO, "Cachebench: disabling pool rebalancer");
-  //   cache_->stopPoolRebalancer(std::chrono::seconds(0));
-  // }
+  if (config_.rebalanceStrategy == "disabled") {
+    XLOG(INFO, "Cachebench: disabling pool rebalancer");
+    cache_->stopPoolRebalancer(std::chrono::seconds(0));
+  }
 
   if (config_.cacheMonitorFactory) {
     monitor_ = config_.cacheMonitorFactory->create(*cache_);
   }
+
+  // Print whole config
+  XLOG(INFO) << "Using the following cache config"
+             << folly::toPrettyJson(
+                    folly::toDynamic(allocatorConfig_.serialize()));
 
   cleanupGuard.dismiss();
 }

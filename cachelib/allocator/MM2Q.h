@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// This is the real TwoQ implementation in CacheLib
 #pragma once
 
 #include <atomic>

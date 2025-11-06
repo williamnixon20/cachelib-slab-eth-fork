@@ -38,3 +38,8 @@ struct DListObject {
 struct MultiDListObject {
   1: required list<DListObject> lists;
 }
+
+struct S3FIFOListObject {
+  1: required DListObject pfifo;
+  2: required DListObject mfifo;
+}

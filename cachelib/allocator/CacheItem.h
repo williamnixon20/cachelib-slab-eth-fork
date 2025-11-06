@@ -74,6 +74,12 @@ class Map;
 template <typename CacheTrait>
 class CACHELIB_PACKED_ATTR CacheItem {
  public:
+  template <RefcountWithFlags::Flags flagBit>
+  void setFlag() noexcept;
+  template <RefcountWithFlags::Flags flagBit>
+  void unSetFlag() noexcept;
+  template <RefcountWithFlags::Flags flagBit>
+  bool isFlagSet() const noexcept;
   /**
    * CacheAllocator is what the user will be interacting to cache
    * anything. NvmCache is an abstraction that abstracts away NVM
@@ -397,12 +403,6 @@ class CACHELIB_PACKED_ATTR CacheItem {
   /**
    * Functions to set, unset and get bits
    */
-  template <RefcountWithFlags::Flags flagBit>
-  void setFlag() noexcept;
-  template <RefcountWithFlags::Flags flagBit>
-  void unSetFlag() noexcept;
-  template <RefcountWithFlags::Flags flagBit>
-  bool isFlagSet() const noexcept;
 
   /**
    * The following are the data members of CacheItem

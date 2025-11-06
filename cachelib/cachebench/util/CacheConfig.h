@@ -43,6 +43,7 @@ class CacheMonitorFactory {
   virtual std::unique_ptr<CacheMonitor> create(Simple3QAllocator& cache) = 0;
   virtual std::unique_ptr<CacheMonitor> create(Simple2QAllocator& cache) = 0;
   virtual std::unique_ptr<CacheMonitor> create(TinyLFUTailAllocator& cache) = 0;
+  virtual std::unique_ptr<CacheMonitor> create(S3FIFOAllocator& cache) = 0;
 };
 
 // Parse memory tiers configuration from JSON config

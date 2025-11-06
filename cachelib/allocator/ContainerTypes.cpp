@@ -18,6 +18,7 @@
 #include "cachelib/allocator/MM2Q.h"
 #include "cachelib/allocator/MMLru.h"
 #include "cachelib/allocator/MMTinyLFU.h"
+#include "cachelib/allocator/MMS3FIFO.h"
 #include "cachelib/allocator/MMSimple3Q.h"
 #include "cachelib/allocator/MMSimple2Q.h"
 #include "cachelib/allocator/MMTinyLFUTail.h"
@@ -30,6 +31,7 @@ const int MMTinyLFU::kId = 3;
 const int MMSimple3Q::kId = 4;
 const int MMSimple2Q::kId = 5;
 const int MMTinyLFUTail::kId = 6;
+const int MMS3FIFO::kId = 7;
 
 // AccessType
 const int ChainedHashTable::kId = 1;

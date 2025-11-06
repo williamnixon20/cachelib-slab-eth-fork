@@ -296,8 +296,11 @@ std::shared_ptr<RebalanceStrategy> CacheConfig::getRebalanceStrategy() const {
     mhOldConfig.movingAverageParam = mhMovingAverageParam;
     mhOldConfig.maxFreeMemSlabs = mhMaxFreeMemSlabs;
     return std::make_shared<MarginalHitsStrategyOld>(mhOldConfig);
+  } else if (rebalanceStrategy == "disabled") {
+    return nullptr;
   } else {
     // use random strategy (custom impl)
+    printf("Using random strategy\n");
     return std::make_shared<RandomStrategy>(RandomStrategy::Config{
         static_cast<unsigned int>(rebalanceMinSlabs)});
   }

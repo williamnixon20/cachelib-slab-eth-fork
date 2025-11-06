@@ -99,6 +99,7 @@ class FOLLY_PACK_ATTR RefcountWithFlags {
     kMMFlag0 = kNumAccessRefBits + kNumAdminRefBits,
     kMMFlag1,
     kMMFlag2,
+    kMMFlag3,
 
     // Whether or not an item is a regular item or chained alloc
     kIsChainedItem,

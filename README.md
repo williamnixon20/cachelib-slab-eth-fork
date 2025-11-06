@@ -3,6 +3,36 @@
 </p>
 
 # CacheLib
+MOCK_TIMER_LIB_PATH="libmock_time.so"  ./opt/cachelib/bin/cachebench --json_test_config /home/cc/CacheLib/slab-rebalance-bench/docs/config.json --enable_debug_log=true
+
+sudo ./contrib/build.sh -j -T
+sudo ./contrib/build.sh -d -j cachelib
+
+sudo ./contrib/build-package.sh -d -j -S -v cachelib
+
+## Development
+When working on CacheLib itself (e.g. tweaking caching algorithms or adding features to cachebench), the following is recommended:
+
+Run ./contrib/build.sh -j -d -v to install dependencies and build cachelib.
+The resulting cachelib files will be stored in the build-cachelib subdirectory.
+Modify source code files in ./cachelib/
+Rebuild the modified files in build-cachelib using make.
+Example:
+
+$ ./contrib/build.sh -d -j -v
+[... after build is complete ...]
+
+$ cd build-cachelib
+$ make
+[... cachelib and cachebench are rebuild ...]
+
+$ touch touch ../cachelib/cachebench/main.cpp
+$ make
+[... cachelib and cachebench are rebuild ...]
+
+sudo make install -> update /opt
+
+
 
 Pluggable caching engine to build and scale high performance cache services. See
 [www.cachelib.org](https://cachelib.org) for documentation and more information.

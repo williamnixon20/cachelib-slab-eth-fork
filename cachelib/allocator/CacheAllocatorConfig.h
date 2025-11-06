@@ -31,6 +31,8 @@
 #include "cachelib/allocator/MMSimple3Q.h"
 #include "cachelib/allocator/MMSimple2Q.h"
 #include "cachelib/allocator/MMTinyLFUTail.h"
+#include "cachelib/allocator/MMS3FIFO.h"
+
 #include "cachelib/allocator/MemoryMonitor.h"
 #include "cachelib/allocator/MemoryTierCacheConfig.h"
 #include "cachelib/allocator/NvmAdmissionPolicy.h"
@@ -1101,7 +1103,7 @@ CacheAllocatorConfig<T>& CacheAllocatorConfig<T>::setDelayCacheWorkersStart() {
 template <typename T>
 const CacheAllocatorConfig<T>& CacheAllocatorConfig<T>::validate() const {
   // we can track tail hits only if MMType is MM2Q
-  if (trackTailHits && (T::MMType::kId != MM2Q::kId && T::MMType::kId != MMSimple3Q::kId && T::MMType::kId != MMSimple2Q::kId && T::MMType::kId != MMTinyLFUTail::kId)) {
+  if (trackTailHits && (T::MMType::kId != MM2Q::kId && T::MMType::kId != MMSimple3Q::kId && T::MMType::kId != MMSimple2Q::kId && T::MMType::kId != MMTinyLFUTail::kId && T::MMType::kId != MMS3FIFO::kId)) {
     throw std::invalid_argument(
         "Tail hits tracking cannot be enabled on MMTypes except MM2Q.");
   }

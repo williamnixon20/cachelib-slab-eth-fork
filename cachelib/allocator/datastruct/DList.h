@@ -85,6 +85,7 @@ class DList {
   using CompressedPtr = typename T::CompressedPtr;
   using PtrCompressor = typename T::PtrCompressor;
   using DListObject = serialization::DListObject;
+  using RefFlags = typename T::Flags;
 
   DList() = default;
   DList(const DList&) = delete;
@@ -166,6 +167,47 @@ class DList {
   // moves a node that belongs to the linked list to the head of the linked
   // list.
   void moveToHead(T& node) noexcept;
+
+  // Bit MM_BIT_0 is used to record if the item is hot.
+  void markProbationary(T& node) noexcept {
+    node.template setFlag<RefFlags::kMMFlag0>();
+  }
+
+  void unmarkProbationary(T& node) noexcept {
+    node.template unSetFlag<RefFlags::kMMFlag0>();
+  }
+
+  bool isProbationary(const T& node) const noexcept {
+    return node.template isFlagSet<RefFlags::kMMFlag0>();
+  }
+
+  // Bit MM_BIT_2 is used to record if the item is cold.
+  void markMain(T& node) noexcept {
+    node.template setFlag<RefFlags::kMMFlag2>();
+  }
+
+  void unmarkMain(T& node) noexcept {
+    node.template unSetFlag<RefFlags::kMMFlag2>();
+  }
+
+  bool isMain(const T& node) const noexcept {
+    return node.template isFlagSet<RefFlags::kMMFlag2>();
+  }
+
+  // Bit MM_BIT_1 is used to record if the item has been accessed since
+  // being written in cache. Unaccessed items are ignored when determining
+  // projected update time.
+  void markAccessed(T& node) noexcept {
+    node.template setFlag<RefFlags::kMMFlag1>();
+  }
+
+  void unmarkAccessed(T& node) noexcept {
+    node.template unSetFlag<RefFlags::kMMFlag1>();
+  }
+
+  static bool isAccessed(const T& node) {
+    return node.template isFlagSet<RefFlags::kMMFlag1>();
+  }
 
   T* getHead() const noexcept { return head_; }
   T* getTail() const noexcept { return tail_; }

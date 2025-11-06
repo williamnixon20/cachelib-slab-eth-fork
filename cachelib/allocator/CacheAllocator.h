@@ -6089,6 +6089,7 @@ extern template class CacheAllocator<LruCacheTrait>;
 extern template class CacheAllocator<LruCacheWithSpinBucketsTrait>;
 extern template class CacheAllocator<Lru2QCacheTrait>;
 extern template class CacheAllocator<TinyLFUCacheTrait>;
+// extern template class CacheAllocator<S3FIFOCacheTrait>;
 
 // CacheAllocator with an LRU eviction policy
 // LRU policy can be configured to act as a segmented LRU as well
@@ -6119,4 +6120,7 @@ using Simple2QAllocator = CacheAllocator<Simple2QCacheTrait>;
 
 using TinyLFUTailAllocator =
     CacheAllocator<TinyLFUTailCacheTrait>; // TinyLFU with tail hits
+
+using S3FIFOAllocator =
+    CacheAllocator<S3FIFOCacheTrait>; // S3 FIFO eviction policy
 } // namespace facebook::cachelib

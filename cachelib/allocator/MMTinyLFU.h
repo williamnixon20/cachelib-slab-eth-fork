@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-#pragma once
+ // The original TinyLFU in CacheLib
+// free - mem ", " disabled ", " hits ", " tail -
+//    age ", 'eviction-rate', " lama "
+#pragma once 
 
 #include <atomic>
 
@@ -33,7 +36,7 @@
 #include "cachelib/common/CountMinSketch.h"
 #include "cachelib/common/Mutex.h"
 
-namespace facebook::cachelib {
+    namespace facebook::cachelib {
 // Implements the W-TinyLFU cache eviction policy as described in -
 // https://arxiv.org/pdf/1512.00727.pdf
 //

@@ -96,6 +96,39 @@ class RebalanceStrategy {
 
   virtual ~RebalanceStrategy() = default;
 
+  const char* getStringType() const {
+    switch (type_) {
+    case PickNothingOrTest:
+      return "PickNothingOrTest";
+    case Random:
+      return "Random";
+    case MarginalHits:
+      return "MarginalHits";
+    case MarginalHitsNew:
+      return "MarginalHitsNew";
+    case MarginalHitsOld:
+      return "MarginalHitsOld";
+    case FreeMem:
+      return "FreeMem";
+    case HitsPerSlab:
+      return "HitsPerSlab";
+    case EvictionRate:
+      return "EvictionRate";
+    case HitsPerTailSlab:
+      return "HitsPerTailSlab";
+    case LruTailAge:
+      return "LruTailAge";
+    case LAMA:
+      return "LAMA";
+    case PoolResize:
+      return "PoolResize";
+    case StressRebalance:
+      return "StressRebalance";
+    default:
+      return "Unknown";
+    }
+  }
+
   // Pick an victim and receiver from the same pool
   //
   // @param allocator   Cache allocator that implements CacheBase @param pid
