@@ -9,31 +9,28 @@ import argparse
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Summarize experimental results from multiple work directories')
     
-    parser.add_argument('--base-dirs', nargs='+', required=True,
+    parser.add_argument('--base-dirs', nargs='+',
                         help='List of base directories to process')
     
-    parser.add_argument('--output-file', required=True,
+    parser.add_argument('--output-file',
                         help='Output CSV file path')
     
     return parser.parse_args()
 
+BASE_DIR = "/home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo"
+OUTPUT_FILE = "report/{}_report.csv".format(os.path.basename(BASE_DIR.rstrip('/')))
 # Configuration
 args = parse_arguments()
+if not args.base_dirs:
+    args.base_dirs = [BASE_DIR]
+    print(f"No base directories specified, using default: {BASE_DIR}")
+
+if not args.output_file:
+    args.output_file = OUTPUT_FILE
+    print(f"No output file specified, using default: {OUTPUT_FILE}")
+    
 base_dirs = args.base_dirs
 output_file = args.output_file
-
-# Legacy configuration (commented out for reference)
-# base_path1 = "/nfs/hongshu/thesis-playground/paper-exp/efficiency/"
-# base_path2 = "/proj/latencymodel-PG0/hongshu/paper-exp/"
-# base_dirs = [
-#     base_path1 + "work_dir_meta_detailed_wsr",
-#     base_path1 + "work_dir_new",
-#     base_path1 + "work_dir_cdn",
-#     base_path2 + "lama/work_dir_lama_full",
-#     base_path2 + "lama_new/work_dir_meta_thesis",
-#     #base_path1 + "work_dir_lama_window"
-# ]
-# output_file = "report/end-to-end/report_complete.csv"
 
 print(f"Processing {len(base_dirs)} base directories:")
 for i, base_dir in enumerate(base_dirs, 1):
@@ -62,6 +59,11 @@ def read_result_json(dir):
         with open(f"{dir}/result.json") as f:
             return json.load(f)
     except:
+        try:
+            with open(dir) as f:
+                return json.load(f)
+        except:
+            pass
         print(f"Failed to read {dir}/out.json")
         return None
 
@@ -70,7 +72,7 @@ def read_throughput_json(dir):
     Finds a file in 'dir' matching 'tx.*.json', reads and returns its JSON content.
     Returns None if not found or on error.
     """
-    pattern = os.path.join(dir, "tx.*.json")
+    pattern = os.path.join(dir, "tx*")
     files = glob.glob(pattern)
     if not files:
         return None
@@ -130,13 +132,14 @@ def add_config_columns(df):
 def process_dir(dir):
     config_path = os.path.join(dir, "config.json")
     meta_path = os.path.join(dir, "meta.json")
-    result_json_path = os.path.join(dir, "result.json")
+    result_json_path = os.path.join(dir, "result_0.json")
 
     if os.path.isfile(config_path) and os.path.isfile(meta_path) and os.path.isfile(result_json_path):
         # Check operation count consistency after file validation
         # Find tx.*.json file
-        tx_files = [f for f in os.listdir(dir) if f.startswith("tx.") and f.endswith(".json")]
+        tx_files = [f for f in os.listdir(dir) if f.startswith("tx") and f.endswith(".json")]
         if not tx_files:
+            print(f"Skipping {dir}: no tx.*.json file found")
             return []
         tx_path = os.path.join(dir, tx_files[0])
 
@@ -145,30 +148,33 @@ def process_dir(dir):
             with open(config_path) as cf:
                 config = json.load(cf)
             num_ops = config.get("test_config", {}).get("numOps", None)
-        except Exception:
+        except Exception as e:
+            print(f"Failed to read {config_path}: {e}")
             return []
 
         try:
             with open(tx_path) as tf:
                 tx = json.load(tf)
             ops = tx.get("ops", None)
-        except Exception:
+        except Exception as e:
+            print(f"Failed to read {tx_path}: {e}")
             return []
 
-        if num_ops != ops and num_ops and ops and (num_ops - ops) > 100:
-            ratio = ops / num_ops if num_ops != 0 else float('inf')
-            print(f"Skipping {dir}: numOps={num_ops}, ops={ops}, ratio={ratio:.4f} - inconsistent operation count")
-            return []
+        # if num_ops != ops and num_ops and ops and (num_ops - ops) > 100:
+        #     ratio = ops / num_ops if num_ops != 0 else float('inf')
+        #     print(f"Skipping {dir}: numOps={num_ops}, ops={ops}, ratio={ratio:.4f} - inconsistent operation count")
+        #     return []
         
         # Proceed with normal processing if all checks pass        
         meta_config = read_meta_config(dir)
-        result_json = read_result_json(dir)
+        result_json = read_result_json(result_json_path)
         bench_config = read_cachebench_config(dir)
         throughput_result = read_throughput_json(dir)
         rebalanced_slabs_value = read_rebalanced_slabs(dir)
         
         
         if not result_json:
+            print(f"Skipping {dir}: no result_0.json found")
             return []
 
         if isinstance(result_json, dict):
@@ -201,7 +207,9 @@ def collect_result(base_dirs):
         for d in os.listdir(base_dir):
             dir = os.path.join(base_dir, d)
             try:
+                print(f"  Processing directory: {dir}")
                 result = process_dir(dir)
+                print(f"    Found {len(result)} result entries")
                 if result:
                     # Add base_dir info to each result for tracking
                     for item in result:
@@ -219,7 +227,7 @@ def collect_all_config_keys(base_dirs):
     all_cache_config_keys = set()
     all_test_config_keys = set()
     all_meta_config_keys = set()
-    
+
     for base_dir in base_dirs:
         if not os.path.exists(base_dir):
             continue
@@ -228,7 +236,11 @@ def collect_all_config_keys(base_dirs):
             dir_path = os.path.join(base_dir, d)
             if not os.path.isdir(dir_path):
                 continue
-                
+            
+            # if not have done.txt, skip
+            if not os.path.isfile(os.path.join(dir_path, "done.txt")):
+                continue
+
             try:
                 # Collect keys from meta_config
                 meta_path = os.path.join(dir_path, "meta.json")
@@ -290,6 +302,7 @@ def remap_df(df, all_meta_keys, all_cache_keys, all_test_keys):
             return "marginal-hits"
         else:
             return x
+    print("Df head", df.head())
 
     df["rebalance_strategy"] = df["rebalanceStrategy"].apply(map_rebalance_strategy)
     
@@ -465,9 +478,10 @@ def add_tuned_improvement(df):
     return df
 
 
+
 def main():
-    # Parse command line arguments
-    args = parse_arguments()
+    # # Parse command line arguments
+    # args = parse_arguments()
     
     # Step 1: Collect all configuration keys from all directories
     print("Collecting configuration keys from all directories...")
