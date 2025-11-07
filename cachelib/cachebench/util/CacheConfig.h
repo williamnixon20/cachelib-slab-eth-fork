@@ -84,7 +84,7 @@ struct CacheConfig : public JSONConfig {
   uint64_t wakeUpRebalancerEveryXReqs{0};
   uint64_t anomalyDetectionFrequency{0}; // disabled
   unsigned int increaseIntervalFactor{2};
-  bool syncRebalance{true};
+  bool syncRebalance{false};
   bool useAdaptiveRebalanceInterval{false};
   bool useAdaptiveRebalanceIntervalV2{false};
   bool useAnomalyDetection{false};
@@ -129,7 +129,7 @@ struct CacheConfig : public JSONConfig {
   unsigned int footprintBufferSize{20000000};
 
   bool mhEnableHoldOff{false};
-  bool countColdTailHitsOnly{false};
+  bool countColdTailHitsOnly{true};
   bool enableTailHitsTracking{false};
   unsigned int tailSlabCnt{1};
   bool enableShardsMrc{false};
@@ -390,6 +390,36 @@ struct CacheConfig : public JSONConfig {
   CacheConfig() {}
 
   std::shared_ptr<RebalanceStrategy> getRebalanceStrategy() const;
+
+  folly::dynamic toDynamic() const {
+    folly::dynamic obj = folly::dynamic::object;
+
+    // You must list fields you want printed:
+    obj["allocator"] = allocator;
+    obj["cacheDir"] = cacheDir;
+    obj["cacheSizeMB"] = cacheSizeMB;
+    obj["rebalanceStrategy"] = rebalanceStrategy;
+    obj["enableTailHitsTracking"] = enableTailHitsTracking;
+    obj["countColdTailHitsOnly"] = countColdTailHitsOnly;
+    obj["mhMinDiff"] = mhMinDiff;
+    obj["mhMinDiffRatio"] = mhMinDiffRatio;
+    obj["mhMovingAverageParam"] = mhMovingAverageParam;
+    obj["maxAllocSize"] = maxAllocSize;
+    obj["minAllocSize"] = minAllocSize;
+    obj["allocFactor"] = allocFactor;
+
+    // For vectors:
+    obj["allocSizes"] = folly::dynamic::array;
+    for (auto v : allocSizes)
+      obj["allocSizes"].push_back(v);
+
+    // For nested configs like poolSizes:
+    obj["poolSizes"] = folly::dynamic::array;
+    for (auto p : poolSizes)
+      obj["poolSizes"].push_back(p);
+
+    return obj;
+  }
 };
 } // namespace cachebench
 } // namespace cachelib

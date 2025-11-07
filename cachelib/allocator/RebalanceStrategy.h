@@ -80,6 +80,7 @@ class RebalanceStrategy {
     MarginalHitsNew,
     MarginalHitsOld,
     FreeMem,
+    HitsPerSlabToggle,
     HitsPerSlab,
     EvictionRate,
     HitsPerTailSlab,
@@ -108,6 +109,8 @@ class RebalanceStrategy {
       return "MarginalHitsNew";
     case MarginalHitsOld:
       return "MarginalHitsOld";
+    case HitsPerSlabToggle:
+      return "HitsPerSlabToggle";
     case FreeMem:
       return "FreeMem";
     case HitsPerSlab:

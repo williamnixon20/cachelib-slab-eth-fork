@@ -100,11 +100,11 @@ class MMS3FIFO {
     //                                refresh time according to the ratio.
     // useCombinedLockForIterators    Whether to use combined locking for
     //                                withEvictionIterator
-    Config(bool updateOnW, bool updateOnR,uint32_t mmReconfigureInterval)
+    Config(uint32_t time, bool updateOnW, bool updateOnR)
         : updateOnWrite(updateOnW),
           updateOnRead(updateOnR),
           mmReconfigureIntervalSecs(
-              std::chrono::seconds(mmReconfigureInterval)) {}
+              std::chrono::seconds(time)) {}
 
     Config() = default;
     Config(const Config& rhs) = default;
@@ -518,7 +518,6 @@ class MMS3FIFO {
 
       // Combine total list size and desired tail size
       size_t listSize = pfifo_->size() + mfifo_->size();
-      // max is listSize * tailSize
       size_t nTail = config_.tailSize;
 
       // Start from tail of main list

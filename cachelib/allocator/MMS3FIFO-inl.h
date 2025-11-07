@@ -31,6 +31,7 @@ MMS3FIFO::Container<T, HookPtr>::Container(serialization::MMS3FIFOObject object,
 template <typename T, MMS3FIFO::Hook<T> T::* HookPtr>
 bool MMS3FIFO::Container<T, HookPtr>::recordAccess(T& node,
                                                    AccessMode mode) noexcept {
+  // printf("Attempting to record access for node %p\n", &node);
   if ((mode == AccessMode::kWrite && !config_.updateOnWrite) ||
       (mode == AccessMode::kRead && !config_.updateOnRead)) {
     return false;
@@ -239,6 +240,7 @@ MMContainerStat MMS3FIFO::Container<T, HookPtr>::getStats() const noexcept {
     return folly::make_array(qdlist_.size());
   });
   // printf("Num hits toggle tail: %d\n", numHitsToggleTail_);
+  // printf("Num hits toggle: %d\n", numHitsToggle_);
   return {stat[0] /* lru size */,
           // stat[1] /* tail time */,
           0, 0 /* refresh time */, 0, 0, 0, numHitsToggleTail_, numHitsToggle_};

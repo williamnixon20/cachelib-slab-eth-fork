@@ -712,7 +712,7 @@ bool MM2Q::Container<T, HookPtr>::recordAccess(T& node,
       (mode == AccessMode::kRead && !config_.updateOnRead)) {
     return false;
   }
-
+  
   const auto curr = static_cast<Time>(util::getCurrentTimeSec());
   // check if the node is still being memory managed
   if (node.isInMMContainer() &&

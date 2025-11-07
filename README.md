@@ -9,6 +9,21 @@ sudo ./contrib/build.sh -j -T
 sudo ./contrib/build.sh -d -j cachelib
 
 sudo ./contrib/build-package.sh -d -j -S -v cachelib
+/home/cc/CacheLib/slab-rebalance-bench/overhead/master/master.py
+
+
+../opt/cachelib/bin/cachebench --json_test_config /home/cc/CacheLib/slab-rebalance-bench/docs/config.json --enable_debug_log=true
+
+
+/home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/wiki_2019t.oracleGeneral.sample10.zst-5cd7fad2b2baa12d63b1c70e27312cf9/config.json
+
+
+
+
+
+# ./zstd_reader /mnt/data/privworkload/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/.priv/tencent_photo1.oracleGeneral.sample10.zst
+# cd /home/cc/CacheLib/slab-rebalance-bench/exp/prepare_exp_configs 
+#  python3 gen_config_s3fifo.py
 
 ## Development
 When working on CacheLib itself (e.g. tweaking caching algorithms or adding features to cachebench), the following is recommended:

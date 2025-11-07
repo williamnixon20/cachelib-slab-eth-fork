@@ -18,6 +18,7 @@
 
 #include "cachelib/allocator/FreeMemStrategy.h"
 #include "cachelib/allocator/HitsPerSlabStrategy.h"
+#include "cachelib/allocator/HitsPerSlabToggleStrategy.h"
 #include "cachelib/allocator/HitsPerTailSlabStrategy.h"
 #include "cachelib/allocator/LAMAStrategy.h"
 #include "cachelib/allocator/MarginalHitsStrategyNew.h"
@@ -298,6 +299,16 @@ std::shared_ptr<RebalanceStrategy> CacheConfig::getRebalanceStrategy() const {
     return std::make_shared<MarginalHitsStrategyOld>(mhOldConfig);
   } else if (rebalanceStrategy == "disabled") {
     return nullptr;
+  } else if (rebalanceStrategy == "hits-toggle") {
+    // use hits toggle strategy
+    HitsPerSlabToggleStrategy::Config hpsConfig;
+    hpsConfig.minDiff = hpsMinDiff;
+    hpsConfig.diffRatio = rebalanceDiffRatio;
+    hpsConfig.minSlabs = rebalanceMinSlabs;
+    hpsConfig.numSlabsFreeMem = hpsNumSlabsFreeMem;
+    hpsConfig.minLruTailAge = hpsMinLruTailAge;
+    return std::make_shared<HitsPerSlabToggleStrategy>(hpsConfig);
+
   } else {
     // use random strategy (custom impl)
     printf("Using random strategy\n");

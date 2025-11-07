@@ -52,6 +52,7 @@ add_library (cachelib_allocator
     MemoryMonitor.cpp
     memory/SlabAllocator.cpp
     memory/Slab.cpp
+    HitsPerSlabToggleStrategy.cpp
     nvmcache/NvmItem.cpp
     nvmcache/NavyConfig.cpp
     nvmcache/NavySetup.cpp

@@ -210,6 +210,10 @@ struct PoolStats {
     return cacheStats.at(cid).numHits;
   }
 
+  uint64_t numHitsToggleForClass(ClassId cid) const {
+    return cacheStats.at(cid).containerStat.numSecondLastTailAccesses;
+  }
+
   // number of slabs in this class id
   uint64_t numSlabsForClass(ClassId cid) const {
     return mpStats.acStats.at(cid).totalSlabs();

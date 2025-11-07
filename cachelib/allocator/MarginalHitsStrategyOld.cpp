@@ -114,6 +114,8 @@ RebalanceContext MarginalHitsStrategyOld::pickVictimAndReceiverFromRankings(
         classStates_[pid].smoothedRanks[ctx.receiverClassId],
         static_cast<int>(ctx.victimClassId),
         classStates_[pid].smoothedRanks[ctx.victimClassId]);
+
+        
   return ctx;
 }
 } // namespace facebook::cachelib

@@ -1302,6 +1302,8 @@ std::string CacheAllocatorConfig<T>::stringifyRebalanceStrategy(
     return "PickNothingOrTest";
   case RebalanceStrategy::Random:
     return "Random";
+  case RebalanceStrategy::HitsPerSlabToggle:
+    return "HitsPerSlabToggle";
   case RebalanceStrategy::HitsPerTailSlab:
     return "HitsPerTailSlab";
   case RebalanceStrategy::LAMA:

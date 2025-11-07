@@ -47,6 +47,7 @@ struct Info {
 
   // number of hits for this allocation class in this pool
   uint64_t hits{0};
+  uint64_t hitsToggle{0};
 
   // accumulative number of hits in the tail slab of this allocation class
   uint64_t accuTailHits{0};
@@ -136,6 +137,18 @@ struct Info {
     return poolStats.numHitsForClass(id) - hits;
   }
 
+  uint64_t deltaHitsToggle(const PoolStats& poolStats) const {
+    XDCHECK(poolStats.cacheStats.find(id) != poolStats.cacheStats.end());
+    // When a thread goes out of scope, numHitsForClass will decrease. In this
+    // case, we simply consider delta as 0.  TODO: change following if to
+    // XDCHECK_GE(poolStats.numHitsForClass(id), hits) once all use cases
+    // are using CacheStats::ThreadLocalStats
+    if (poolStats.numHitsToggleForClass(id) <= hitsToggle) {
+      return 0;
+    }
+
+    return poolStats.numHitsToggleForClass(id) - hitsToggle;
+  }
 
   uint64_t deltaRequests(const PoolStats& poolStats) const {
     const auto& cacheStats = poolStats.cacheStats.at(id);
@@ -176,6 +189,10 @@ struct Info {
     return deltaHits(poolStats) / poolStats.numSlabsForClass(id);
   }
 
+  uint64_t deltaHitsTogglePerSlab(const PoolStats& poolStats) const {
+    return deltaHitsToggle(poolStats) / poolStats.numSlabsForClass(id);
+  }
+
   // return the delta of hits per slab for this alloc class from the current
   // state after removing one slab
   //
@@ -185,6 +202,11 @@ struct Info {
   uint64_t projectedDeltaHitsPerSlab(const PoolStats& poolStats) const {
     const auto nSlab = poolStats.numSlabsForClass(id);
     return nSlab == 1 ? UINT64_MAX : deltaHits(poolStats) / (nSlab - 1);
+  }
+
+  uint64_t projectedDeltaHitsTogglePerSlab(const PoolStats& poolStats) const {
+    const auto nSlab = poolStats.numSlabsForClass(id);
+    return nSlab == 1 ? UINT64_MAX : deltaHitsToggle(poolStats) / (nSlab - 1);
   }
 
   // return the delta of hits in the tail slab for this allocation class
@@ -261,6 +283,10 @@ struct Info {
 
   void updateHits(const PoolStats& poolStats) noexcept {
     hits = poolStats.numHitsForClass(id);
+  }
+  
+  void updateHitsToggle(const PoolStats& poolStats) noexcept {
+    hitsToggle = poolStats.numHitsToggleForClass(id);
   }
 
   void updateAllocations(const PoolStats& poolStats) noexcept {
