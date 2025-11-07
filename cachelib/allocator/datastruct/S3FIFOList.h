@@ -106,6 +106,21 @@ class S3FIFOList {
     }
   }
 
+  // Bit MM_BIT_1 is used to record if the item has been accessed since
+  // being written in cache. Unaccessed items are ignored when determining
+  // projected update time.
+  void markAccessed(T& node) noexcept {
+    node.template setFlag<RefFlags::kMMFlag1>();
+  }
+
+  void unmarkAccessed(T& node) noexcept {
+    node.template unSetFlag<RefFlags::kMMFlag1>();
+  }
+
+  static bool isAccessed(const T& node) {
+    return node.template isFlagSet<RefFlags::kMMFlag1>();
+  }
+
   // Bit MM_BIT_0 is used to record if the item is hot.
   void markProbationary(T& node) noexcept {
     node.template setFlag<RefFlags::kMMFlag0>();
@@ -185,8 +200,8 @@ class S3FIFOList {
 
       // check access state
       if (usePFifo) {
-        if (pfifo_->isAccessed(*curr)) {
-          pfifo_->unmarkAccessed(*curr);
+        if (isAccessed(*curr)) {
+          unmarkAccessed(*curr);
           unmarkProbationary(*curr);
           markMain(*curr);
 
@@ -200,8 +215,8 @@ class S3FIFOList {
           break;
         }
       } else { // using mfifo
-        if (mfifo_->isAccessed(*curr)) {
-          mfifo_->unmarkAccessed(*curr);
+        if (isAccessed(*curr)) {
+          unmarkAccessed(*curr);
           mfifo_->remove(*curr);
           // XDCHECK(nodeRemoved == curr);
           mfifo_->linkAtHead(*curr);
