@@ -1,0 +1,109 @@
+// VALID_ALLOCATOR_REBALANCE_COMBINATIONS = {
+//   "SIMPLE2Q": set([
+//     "marginal-hits-old",
+//     "marginal-hits-new",
+//     "free-mem",
+//     "disabled",
+//     "hits",
+//     "tail-age",
+//     "lama", 'eviction-rate'
+//   ]),
+//   "LRU2Q": set([
+//     "marginal-hits-old",
+//     "marginal-hits-new",
+//     "free-mem",
+//     "disabled",
+//     "hits",
+//     "tail-age",
+//     "lama", 'eviction-rate'
+//   ]),
+//   "TINYLFU": set([
+//     "free-mem",
+//     "disabled",
+//     "hits",
+//     "tail-age", 'eviction-rate',
+//     "lama"
+//   ]),
+//   "TINYLFUTail": set([
+//     "marginal-hits-old",
+//     "marginal-hits-new"
+//   ]),
+// }
+
+{
+  "cache_config": {
+    "moveOnSlabRelease": false,
+    "rebalanceOnRecordAccess": false,
+    "lruRefreshSec": 0,
+    "poolResizeIntervalSec": 0,
+    "poolRebalanceIntervalSec": 1,
+    "minAllocSize": 72,
+    "allocFactor": 1.25,
+    "syncRebalance": false,
+    "rebalanceStrategy": "hits",
+    "cacheSizeMB": 6436,
+    "maxAllocSize": 4194304,
+    "rebalanceDiffRatio": 0.1,
+    "wakeUpRebalancerEveryXReqs": 50000,
+    "allocator": "TINYLFU"
+  },
+  "test_config": {
+    "generator": "oracle-general-replay",
+    "replayGeneratorConfig": {
+      "ampFactor": 1
+    },
+    "useTraceTimer": false,
+    "repeatTraceReplay": false,
+    "repeatOpCount": true,
+    "onlySetIfMiss": false,
+    "enableLookaside": true,
+    "timestampFactor": 1,
+    "numThreads": 1,
+    "prepopulateCache": true,
+    "zstdTrace": true,
+    "compressed": true,
+    "traceFileName": "/home/cc/cachelib-eth-dev/wiki_2019t.oracleGeneral.zst",
+    "numOps": 1644762386
+  }
+}
+
+// {
+//   "cache_config": {
+//         "moveOnSlabRelease": false,
+//         "rebalanceOnRecordAccess": false,
+//         "lruRefreshSec": 0,
+//         "poolResizeIntervalSec": 0,
+//         "poolRebalanceIntervalSec": 1,
+//         "minAllocSize": 72,
+//         "allocFactor": 1.25,
+//         "syncRebalance": true,
+//         "rebalanceStrategy": "false",
+//         // "lruUpdateOnRead": true,
+//         "cacheSizeMB": 1000,
+
+//         "maxAllocSize": 4194304,
+//         "wakeUpRebalancerEveryXReqs": 50000,
+//         "allocator": "S3FIFO"
+//   },
+//   "test_config": {
+//     "generator": "oracle-general-replay",
+//     "replayGeneratorConfig": {
+//       "ampFactor": 1
+//     },
+//     "useTraceTimer": false,
+//     "repeatTraceReplay": false,
+//     "repeatOpCount": true,
+//     "onlySetIfMiss": false,
+//     "enableLookaside": true,
+//     "timestampFactor": 1,
+//     "numThreads": 1,
+//     "ignoreLargeReq": true,
+//     "prepopulateCache": true,
+//     "zstdTrace": true,
+//     "compressed": true,
+//     // "traceFileName": "/mnt/data/privworkload/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/.priv/w92.oracleGeneral.bin.zst",
+//     "traceFileName": "/home/cc/libcachesim-private/data/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/cacheDatasets/msr/msr_web_2.oracleGeneral.zst",
+//     "numOps": 10000000
+//   }
+// }
+

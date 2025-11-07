@@ -1,0 +1,26 @@
+# Ignore work directories
+work_dir*/
+
+# Ignore log and json files in state directories with timestamps, but keep csv files
+[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/*.log
+[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/*.json
+
+# Ignore specific log and result files
+log*.txt
+rc.txt
+rx*.json
+worker.log
+result.json
+running.lock
+master.log*
+nohup.out
+tx.*.json
+
+# Ignore scheduler_state.json files anywhere
+**/scheduler_state.json
+scheduler_state.json
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class

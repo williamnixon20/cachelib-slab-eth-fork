@@ -1,0 +1,8 @@
+2025-11-06 19:25:59,446 INFO: Found 144 subdirectories in /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo
+2025-11-06 19:25:59,447 INFO: Skipping /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/w96.oracleGeneral.bin.zst-eebfec5a68831a2475b8d9c4b7d77583: rc.txt indicates success
+2025-11-06 19:25:59,447 INFO: Skipping /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/wiki_2019u.oracleGeneral.sample10.zst-e644f614157c6dc1e7da2188f2585639: memory requirement 11.41 GB exceeds 10 GB
+2025-11-06 19:25:59,447 INFO: Skipping /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/alibabaBlock2020.oracleGeneral.sample10.zst-c3b0598a4539100a3afa56a0f4839b59: memory requirement 175.86 GB exceeds 10 GB
+2025-11-06 19:25:59,448 INFO: Skipping /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/w92.oracleGeneral.bin.zst-f1e4c19cc7b1da9293c0c3c376631bed: rc.txt indicates success
+2025-11-06 19:25:59,448 INFO: Skipping /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/wiki_2019u.oracleGeneral.sample10.zst-04dfa099e587454e582f908bd6444c0b: memory requirement 11.41 GB exceeds 10 GB
+2025-11-06 19:25:59,448 INFO: Re-running /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/wiki_2016u.oracleGeneral.sample10.zst-a766151bc2e3eac0766b8e26e0405cab: rc.txt indicates failure with code 127
+2025-11-06 19:25:59,449 INFO: Running cachebench for /home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_s3fifo/wiki_2016u.oracleGeneral.sample10.zst-a766151bc2e3eac0766b8e26e0405cab

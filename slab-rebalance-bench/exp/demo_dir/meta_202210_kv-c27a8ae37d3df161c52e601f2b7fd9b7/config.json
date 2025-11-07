@@ -1,0 +1,37 @@
+{
+  "cache_config": {
+    "moveOnSlabRelease": false,
+    "lruRefreshSec": 0,
+    "poolResizeIntervalSec": 0,
+    "poolRebalanceIntervalSec": 1,
+    "minAllocSize": 72,
+    "allocFactor": 1.25,
+    "rebalanceStrategy": "free-mem",
+    "cacheSizeMB": 35136,
+    "maxAllocSize": 4194304,
+    "wakeUpRebalancerEveryXReqs": 50000,
+    "lru2qHotPct": 100,
+    "lru2qColdPct": 0,
+    "allocator": "SIMPLE2Q",
+    "rebalanceOnRecordAccess": true
+  },
+  "test_config": {
+    "generator": "oracle-general-replay",
+    "replayGeneratorConfig": {
+      "ampFactor": 1
+    },
+    "useTraceTimer": true,
+    "repeatTraceReplay": false,
+    "repeatOpCount": true,
+    "onlySetIfMiss": false,
+    "enableLookaside": true,
+    "timestampFactor": 1,
+    "numThreads": 1,
+    "ignoreLargeReq": true,
+    "prepopulateCache": true,
+    "zstdTrace": true,
+    "compressed": true,
+    "traceFileName": "/mntData2/data/oracleReuse/metaKV/202210_kv_traces_all_sort.csv.oracleGeneral.zst",
+    "numOps": 1482478166
+  }
+}

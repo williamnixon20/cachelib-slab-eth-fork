@@ -1,0 +1,43 @@
+{
+    "cache_config": {
+        "moveOnSlabRelease": false,
+        "rebalanceOnRecordAccess": false,
+        "lruRefreshSec": 0,
+        "poolResizeIntervalSec": 0,
+        "poolRebalanceIntervalSec": 1,
+        "minAllocSize": 72,
+        "allocFactor": 1.25,
+        "syncRebalance": false,
+
+        "maxAllocSize": 4194304,
+        "wakeUpRebalancerEveryXReqs": 50000,
+
+        // Configurable
+        "rebalanceStrategy": "disabled",
+        "cacheSizeMB": 648,
+
+        // LRU SETTINGS
+        "lru2qHotPct": 100, 
+        "lru2qColdPct": 0,
+        "allocator": "SIMPLE2Q"
+    },
+    "test_config": {
+        "generator": "oracle-general-replay",
+        "replayGeneratorConfig": {
+            "ampFactor": 1
+        },
+        "useTraceTimer": false,
+        "repeatTraceReplay": false,
+        "repeatOpCount": true,
+        "onlySetIfMiss": false,
+        "enableLookaside": true,
+        "timestampFactor": 1,
+        "numThreads": 1,
+        "ignoreLargeReq": true,
+        "prepopulateCache": true,
+        "zstdTrace": true,
+        "compressed": true,
+        "traceFileName": "/mnt/data/privworkload/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/.priv/w92.oracleGeneral.bin.zst",
+        "numOps": 10000000
+    }
+}

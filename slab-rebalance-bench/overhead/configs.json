@@ -1,0 +1,4 @@
+{
+    "cachelib_path": "/home/cc/CacheLib/opt/cachelib/bin/cachebench",
+    "trace_file_path": "/home/cc/CacheLib/traces/202206_kv_traces_all.csv.oracleGeneral"
+}

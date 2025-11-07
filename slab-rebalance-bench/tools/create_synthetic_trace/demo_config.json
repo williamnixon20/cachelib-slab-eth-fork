@@ -1,0 +1,52 @@
+[
+    {
+        "type": "static",
+        "time_span": 604800,
+        "total_requests": 80000000,
+        "output_file": "/mnt/cfs/hongshu/traces/synth_static_202.csv",
+        "generators_config": [
+            {"m": 1600000, "alpha": 0.25, "share": 1, "size": 214},
+            {"m": 800000, "alpha": 0.85, "share": 1, "size": 470},
+            {"m": 400000, "alpha": 0.25, "share": 1, "size": 982},
+            {"m": 200000, "alpha": 0.85, "share": 1, "size": 2006},
+            {"m": 100000, "alpha": 1.0, "share": 1, "size": 4054}
+        ]
+    },
+    {
+        "type": "static",
+        "time_span": 604800,
+        "total_requests": 80000000,
+        "output_file": "/mnt/cfs/hongshu/traces/synth_static_204.csv",
+        "generators_config": [
+            {"m": 1600000, "alpha": 1.0, "share": 1, "size": 214},
+            {"m": 800000, "alpha": 1.0, "share": 1, "size": 470},
+            {"m": 400000, "alpha": 1.0, "share": 1, "size": 982},
+            {"m": 200000, "alpha": 1.0, "share": 1, "size": 2006},
+            {"m": 100000, "alpha": 1.0, "share": 1, "size": 4054}
+        ]
+    },
+    {
+        "type": "periodic",
+        "time_span": 604800,
+        "total_requests": 80000000,
+        "output_file": "/mnt/cfs/hongshu/traces/synth_dynamic_400.csv",
+        "generators_config": [
+            [
+                {"m": 1600000, "alpha": 0.25, "share": 1, "size": 214},
+                {"m": 800000, "alpha": 0.85, "share": 1, "size": 470},
+                {"m": 400000, "alpha": 0.25, "share": 1, "size": 982},
+                {"m": 200000, "alpha": 0.85, "share": 1, "size": 2006},
+                {"m": 100000, "alpha": 1.0, "share": 4, "size": 4054}
+            ],
+            [
+                {"m": 1600000, "alpha": 0.25, "share": 1, "size": 214},
+                {"m": 800000, "alpha": 0.85, "share": 1, "size": 470},
+                {"m": 400000, "alpha": 0.25, "share": 4, "size": 982},
+                {"m": 200000, "alpha": 0.85, "share": 1, "size": 2006},
+                {"m": 100000, "alpha": 1.0, "share": 1, "size": 4054}
+            ]
+        ],
+        "weight_array": [1, 1],
+        "request_per_cycle": 80000000
+    }
+]

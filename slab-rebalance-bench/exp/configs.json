@@ -1,0 +1,9 @@
+{
+    "work_dirs": [
+        "/nfs/hongshu/slab-rebalance-bench/exp/work_dir_demo"
+    ],
+    "need_download_traces": false,
+    "local_trace_file_dir": "/mnt/data/privworkload/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/.priv",
+    "wget_trace_path": "https://ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/cacheDatasets",
+    "python_path": "python3"
+}

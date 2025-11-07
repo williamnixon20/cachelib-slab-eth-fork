@@ -1,0 +1,36 @@
+{
+  "cache_config": {
+    "moveOnSlabRelease": false,
+    "rebalanceOnRecordAccess": false,
+    "lruRefreshSec": 0,
+    "poolResizeIntervalSec": 0,
+    "poolRebalanceIntervalSec": 1,
+    "minAllocSize": 72,
+    "allocFactor": 1.25,
+    "syncRebalance": false,
+    "rebalanceStrategy": "lama",
+    "cacheSizeMB": 648,
+    "maxAllocSize": 4194304,
+    "wakeUpRebalancerEveryXReqs": 1000000,
+    "lamaMinThreshold": 1e-05,
+    "allocator": "TINYLFU"
+  },
+  "test_config": {
+    "generator": "oracle-general-replay",
+    "replayGeneratorConfig": {
+      "ampFactor": 1
+    },
+    "useTraceTimer": false,
+    "repeatTraceReplay": false,
+    "repeatOpCount": true,
+    "onlySetIfMiss": false,
+    "enableLookaside": true,
+    "timestampFactor": 1,
+    "numThreads": 1,
+    "prepopulateCache": true,
+    "zstdTrace": true,
+    "compressed": false,
+    "traceFileName": "/users/Hongshu/traces/202206_kv_traces_all.bin",
+    "numOps": 1644762386
+  }
+}
