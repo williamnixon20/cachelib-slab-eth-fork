@@ -546,6 +546,14 @@ def main():
     #raw_output_file = args.output_file.replace('.csv', '_raw.csv')
     processed_output_file = args.output_file.replace('.csv', '_processed.csv')
     
+    # drop duplicate columns. also, sort columns
+    remapped_df = remapped_df.loc[:,~remapped_df.columns.duplicated()]
+    remapped_df = remapped_df.reindex(sorted(remapped_df.columns), axis=1)
+    # I want first few columns to be trace_name, strategy, hit ratio, num slab rebalanced
+    first_cols = ['trace_name', 'allocator', 'rebalance_strategy', 'miss_ratio', 'n_rebalanced_slabs']
+    remapped_df = remapped_df[first_cols + [col for col in remapped_df.columns if col not in first_cols]]
+    # sort on tracename and allocator
+    remapped_df = remapped_df.sort_values(by=['trace_name', 'rebalance_strategy', 'allocator', 'miss_ratio'])
     #raw_df.to_csv(raw_output_file, index=False)
     remapped_df.to_csv(processed_output_file, index=False)
 
@@ -560,3 +568,6 @@ def main():
 if __name__ == "__main__":
     main()
 
+# cd /home/cc/CacheLib/slab-rebalance-bench/exp
+# python3 summarize_result.py 
+# python3 plotting/plot_miss_ratio_bar.py 
