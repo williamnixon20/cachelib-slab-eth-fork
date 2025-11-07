@@ -21,8 +21,10 @@ import pandas as pd
 
 import os, glob, json, math, copy, itertools, subprocess
 
-dir_glob = "/mnt/data/privworkload/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/.priv"
+dir_glob = "/home/cc/cachelib-1mb/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/cacheDatasets/twitter/sample10"
 WORK_DIR = "../work_dir_s3fifo"
+# create workdir
+os.makedirs(WORK_DIR, exist_ok=True)
 
 used_allocators = ["SIMPLE2Q", "LRU2Q", "TINYLFU", "TINYLFUTail", "S3FIFO"]
 used_strats = ["marginal-hits-old", "hits", "disabled"]
@@ -48,7 +50,7 @@ VALID_ALLOCATOR_REBALANCE_COMBINATIONS = {
     "LRU2Q":    {"marginal-hits-old", "marginal-hits-new", "free-mem", "disabled", "hits", "tail-age", "lama", "eviction-rate"},
     "TINYLFU":  {"free-mem", "disabled", "hits", "tail-age", "eviction-rate", "lama"},
     "TINYLFUTail": {"marginal-hits-old", "marginal-hits-new"},
-    "S3FIFO":   {"marginal-hits-old", "disabled", "hits"},
+    "S3FIFO":   {"marginal-hits-old", "disabled", "hits", "hits-toggle"},
 }
 
 # Keep only the strategies you said you’ll use
@@ -69,7 +71,7 @@ def compute_wss(trace_file):
             "wss_mb": j["unique_bytes_estimated"] / (1024 * 1024),
         }
     print(f"Computing WSS for {trace_file}")
-    out = subprocess.run(["/home/cc/CacheLib/slab-rebalance-bench/tools/zstd_reader", trace_file], stdout=subprocess.PIPE, text=True, check=True)
+    out = subprocess.run(["/home/cc/cachelib-1mb/slab-rebalance-bench/tools/zstd_reader", trace_file], stdout=subprocess.PIPE, text=True, check=True)
     j = json.loads(out.stdout.strip())
     # Working-set size = unique_bytes_estimated (bytes) → MB
     wss_mb = j["unique_bytes_estimated"] / (1024 * 1024)
@@ -117,6 +119,8 @@ cache_configs = {
 }
 cache_configs = filter_cache_configs(cache_configs, set(used_strats))
 
+TWITTER_TO_USE=["cluster52", "cluster17", "cluster18", "cluster24", "cluster44", "cluster45", "cluster29"]
+
 # dict_hash comes from your util; assumed imported
 def generate_configs(base_config_path="base_config.json", force_delete=False):
     total_confs = 0
@@ -125,6 +129,11 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
     intended_uuids = set()
 
     traces = glob.glob(os.path.join(dir_glob, "*.zst"))
+    print(f"Found {len(traces)} traces")
+    
+    # Filter traces to only Twitter clusters you want
+    traces = [t for t in traces if any(cluster in t for cluster in TWITTER_TO_USE)]
+    print(f"Using {len(traces)} traces after filtering")
 
     # Create allocator dicts from names
     allocator_dicts = [make_allocator_dict(a) for a in used_allocators]
@@ -133,6 +142,7 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
         info = compute_wss(trace_file)
         file_name = info["file_name"]
         wss_mb = info["wss_mb"]
+        tot_req = info["total_requests"] if "total_requests" in info else 100_000_000_000
 
         # slab size rule
         slab_size_mb = 1 if "cluster" in file_name.lower() else 4
@@ -146,12 +156,9 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
 
         for wsr in working_set_ratios:
             for rebalanceStrategy in strats_to_use:
-
-                if "marginal" in rebalanceStrategy and allocator_config["allocator"] == "TINYLFU":
-                        continue
                     
                 for param in cache_configs[rebalanceStrategy]:
-                    print("Generating config for trace %s, allocator %s, strategy %s\n", file_name, allocator_config["allocator"], rebalanceStrategy)
+                    print(f"Generating config for trace {file_name}, allocator {allocator_config['allocator']}, strategy {rebalanceStrategy}")
                     cachebench_config = copy.deepcopy(base_config)
                     cachebench_config["cache_config"]["rebalanceStrategy"] = rebalanceStrategy
                     
@@ -173,7 +180,7 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
                     cachebench_config["cache_config"].update(allocator_config)
 
                     cachebench_config["test_config"]["traceFileName"] = trace_file
-                    cachebench_config["test_config"]["numOps"] = int(100_000_000_000)  # stop at EOF
+                    cachebench_config["test_config"]["numOps"] = tot_req
 
                     uuid = f"{file_name}-{dict_hash(cachebench_config)}"
                     intended_uuids.add(uuid)
