@@ -45,20 +45,22 @@ strategy_markers = {
 }
 
 # Define allocator order and labels
-allocator_order = ['LRU', 'LRU2Q', 'TINYLFU']
-allocator_labels = ['LRU', 'TwoQ', 'TinyLFU']
+allocator_order = ['LRU', 'LRU2Q', 'TINYLFU', "S3FIFO"]
+allocator_labels = ['LRU', 'TwoQ', 'TinyLFU', "S3FIFO"]
 
 # Define markers and line styles for allocators
 allocator_markers = {
     'LRU': 'o',
     'LRU2Q': 's', 
-    'TINYLFU': '^'
+    'TINYLFU': '^',
+    'S3FIFO': 'D'
 }
 
 allocator_linestyles = {
     'LRU': '-',
     'LRU2Q': '--',
-    'TINYLFU': '-.'
+    'TINYLFU': '-.',
+    'S3FIFO': ':'
 }
 
 rcParams = {

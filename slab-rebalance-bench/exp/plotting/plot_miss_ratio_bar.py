@@ -37,7 +37,7 @@ def plot_cdn_bars(trace_name, csv_file, output_dir=None):
     plt.rcParams.update(rcParams)
     
     # Create the bar plot
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8), constrained_layout=True)
     
     # Get unique strategies in this data and order them
     available_strategies = df_filtered['rebalance_strategy'].unique()
@@ -123,8 +123,9 @@ def plot_cdn_bars(trace_name, csv_file, output_dir=None):
     # Set reasonable y-axis limits
     ax.set_ylim(bottom=0)
     
-    # Tight layout
     plt.tight_layout()
+    ax.set_title(f"Trace: {trace_name.split('.')[0]}")
+    # Tight layout
     
     # Save the figure in the specified output directory
     output_path = os.path.join(output_dir, f"cdn_bars_miss_ratio_{trace_name}.pdf")
@@ -140,14 +141,10 @@ def plot_all_cdn_traces(csv_file, output_dir=None):
     csv_file (str): Path to the CSV file containing the data
     output_dir (str): Directory to save output plots. If None, uses current directory.
     """
-    trace_names = [
-        'meta_rprn',
-        'meta_reag', 
-        'meta_rnha',
-        'wiki_2019u',
-        'wiki_2016u',
-        'wiki_2019t'
-    ]
+    # read csv file, get all the unique trace names
+    df = pd.read_csv(csv_file)
+    trace_names = df['trace_name'].unique()
+    
     
     for trace_name in trace_names:
         plot_cdn_bars(trace_name, csv_file, output_dir)
@@ -155,6 +152,6 @@ def plot_all_cdn_traces(csv_file, output_dir=None):
     print(f"\nCreated bar plots for {len(trace_names)} CDN traces")
 
 if __name__ == "__main__":
-    csv_file = "../result/efficiency_result_processed.csv"
+    csv_file = "/home/cc/CacheLib/slab-rebalance-bench/exp/report/work_dir_s3fifo_report_processed.csv"
     output_dir = "figures/cdn_bars"
     plot_all_cdn_traces(csv_file, output_dir)
