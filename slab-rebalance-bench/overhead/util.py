@@ -66,7 +66,9 @@ def dict_hash(d):
     json_str = json.dumps(d, sort_keys=True, separators=(',', ':'))
     return hashlib.md5(json_str.encode('utf-8')).hexdigest()
 
-def run_cachebench(top_dir, repeat=3):
+def run_cachebench(top_dir, repeat=3, cores=None):
+    print(f"Running cachebench in {top_dir} for {repeat} iterations")
+    print("Cores:", cores)
     config_file = os.path.join(top_dir, "config.json")
     meta_file = os.path.join(top_dir, "meta.json")
     rc_file = os.path.join(top_dir, "rc.txt")
@@ -85,7 +87,7 @@ def run_cachebench(top_dir, repeat=3):
 
         if config_content["test_config"]["useTraceTimer"]:
             command = [
-                f'MOCK_TIMER_LIB_PATH="{MOCK_TIMER_PATH}"',
+                "taskset", "-c", f"{cores[0]}-{cores[1]}",
                 cachelib_path,
                 "--json_test_config", config_file,
                 "--dump_result_json_file", output_file,
@@ -94,15 +96,17 @@ def run_cachebench(top_dir, repeat=3):
             ]
         else:
             command = [
+                "taskset", "-c", f"{cores[0]}-{cores[1]}",
                 cachelib_path,
                 "--json_test_config", config_file,
                 "--dump_result_json_file", output_file,
                 "--dump_tx_file", tx_file,
                 "--disable_progress_tracker=false"
             ]
-
+            
         with open(log_file, 'w') as out:
-            result = subprocess.run(" ".join(command), shell=True, stdout=out, stderr=subprocess.STDOUT)
+            print(f"Running command: {' '.join(command)}")
+            result = subprocess.run(command, stdout=out, stderr=subprocess.STDOUT)
         # allow failures (lama compatible)
         # if result.returncode != 0:
         #     with open(rc_file, 'w') as rc_out:

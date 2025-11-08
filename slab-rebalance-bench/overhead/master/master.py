@@ -1,12 +1,21 @@
 import sys
 import os 
-os.sched_setaffinity(0, {1}) # numa 1
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from const import *
 from util import run_cachebench
 
 import logging
 from datetime import datetime
+
+import os
+
+multiplier = 8
+cores_per_task = 6
+start_core = 0 + multiplier * cores_per_task
+end_core = start_core + cores_per_task - 1
+# Pin master process to cores 0–3
+os.sched_setaffinity(0, {i for i in range(start_core, end_core + 1)})
+
 
 log_date = datetime.now().strftime("%d-%m-%Y-%H:%M:%S")
 
@@ -20,7 +29,7 @@ logging.basicConfig(
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 # Configuration parameters
-WORK_DIR = "/home/cc/cachelib-1mb/slab-rebalance-bench/exp/work_dir_s3fifo"
+WORK_DIR = "/home/cc/cachelib-1mb/slab-rebalance-bench/exp/work_dir_cluster52"
 working_on_it_file_global = "working_on_it.txt"
 def main():
     try:
@@ -71,7 +80,7 @@ def main():
                 os.remove(rc_file)
             
             logging.info(f"Running cachebench for {subdir}")
-            ret = run_cachebench(subdir, repeat=1)
+            ret = run_cachebench(subdir, repeat=1, cores=(start_core, end_core))
             if ret == 0:
                 logging.info(f"cachebench succeeded for {subdir}")
                 # touch a done file
