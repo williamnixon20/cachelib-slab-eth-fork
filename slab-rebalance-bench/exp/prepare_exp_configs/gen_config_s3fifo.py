@@ -21,13 +21,18 @@ import pandas as pd
 
 import os, glob, json, math, copy, itertools, subprocess
 
-dir_glob = "/home/cc/cachelib-1mb/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/cacheDatasets/twitter/sample10"
-WORK_DIR = "../work_dir_s3fifo"
+dir_glob = "/home/cc/CacheLib/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/cacheDatasets/metaKV"
+WORK_DIR = "../work_dir_metakv_var_size_big"
+#  working_set_ratios = [0.1%, 0.3%, 1%, 3%, 10%]
+
+# working_set_ratios = [0.01]
+# working_set_ratios = [0.001, 0.003, 0.03, 0.1]
+working_set_ratios = [0.1]
 # create workdir
 os.makedirs(WORK_DIR, exist_ok=True)
 
-used_allocators = ["SIMPLE2Q", "LRU2Q", "TINYLFU", "TINYLFUTail", "S3FIFO"]
-used_strats = ["marginal-hits-old", "hits", "disabled"]
+used_allocators = ["SIMPLE2Q", "LRU2Q", "TINYLFU", "S3FIFO"]
+used_strats = ["hits", "disabled"]
 
 # Build allocator config dicts correctly
 def make_allocator_dict(name: str):
@@ -68,10 +73,11 @@ def compute_wss(trace_file):
             "file_name": j.get("file_name") or os.path.basename(trace_file),
             "file_path": j.get("file_path") or trace_file,
             "file_size_mb": j.get("file_size_mb"),
+            "total_requests": j.get("total_requests"),
             "wss_mb": j["unique_bytes_estimated"] / (1024 * 1024),
         }
     print(f"Computing WSS for {trace_file}")
-    out = subprocess.run(["/home/cc/cachelib-1mb/slab-rebalance-bench/tools/zstd_reader", trace_file], stdout=subprocess.PIPE, text=True, check=True)
+    out = subprocess.run(["/home/cc/CacheLib/slab-rebalance-bench/tools/zstd_reader", trace_file], stdout=subprocess.PIPE, text=True, check=True)
     j = json.loads(out.stdout.strip())
     # Working-set size = unique_bytes_estimated (bytes) → MB
     wss_mb = j["unique_bytes_estimated"] / (1024 * 1024)
@@ -79,11 +85,11 @@ def compute_wss(trace_file):
         "file_name": j.get("file_name") or os.path.basename(trace_file),
         "file_path": j.get("file_path") or trace_file,
         "file_size_mb": j.get("file_size_mb"),
+        "total_requests": j.get("total_requests"),
         "wss_mb": wss_mb,
     }
 
 # Your existing knobs
-working_set_ratios = [0.01]
 rebalance_intervals = [50_000]
 placeholder_interval = 50_000
 
@@ -119,7 +125,7 @@ cache_configs = {
 }
 cache_configs = filter_cache_configs(cache_configs, set(used_strats))
 
-TWITTER_TO_USE=["cluster52", "cluster17", "cluster18", "cluster24", "cluster44", "cluster45", "cluster29"]
+# TWITTER_TO_USE=["cluster52", "cluster17", "cluster18", "cluster24", "cluster44", "cluster45", "cluster29"]
 
 # dict_hash comes from your util; assumed imported
 def generate_configs(base_config_path="base_config.json", force_delete=False):
@@ -131,9 +137,11 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
     traces = glob.glob(os.path.join(dir_glob, "*.zst"))
     print(f"Found {len(traces)} traces")
     
-    # Filter traces to only Twitter clusters you want
-    traces = [t for t in traces if any(cluster in t for cluster in TWITTER_TO_USE)]
-    print(f"Using {len(traces)} traces after filtering")
+    # # Filter traces to only Twitter clusters you want
+    # # traces = [t for t in traces if any(cluster in t for cluster in TWITTER_TO_USE)]
+    # # Filter out "cluster"
+    # traces = [t for t in traces if "cluster" not in os.path.basename(t).lower()]
+    # print(f"Using {len(traces)} traces after filtering")
 
     # Create allocator dicts from names
     allocator_dicts = [make_allocator_dict(a) for a in used_allocators]
@@ -156,7 +164,7 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
 
         for wsr in working_set_ratios:
             for rebalanceStrategy in strats_to_use:
-                    
+                
                 for param in cache_configs[rebalanceStrategy]:
                     print(f"Generating config for trace {file_name}, allocator {allocator_config['allocator']}, strategy {rebalanceStrategy}")
                     cachebench_config = copy.deepcopy(base_config)
@@ -175,14 +183,17 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
                     rounded_size_mb = total_slabs * slab_size_mb
 
                     cachebench_config["cache_config"]["cacheSizeMB"] = rounded_size_mb
+                    print(f"  Total slabs (with overhead): {total_slabs}, WSSSIZE: {rounded_size_mb} MB")
                     cachebench_config["cache_config"]["maxAllocSize"] = slab_size_mb * 1024 * 1024
                     cachebench_config["cache_config"].update(param)
                     cachebench_config["cache_config"].update(allocator_config)
 
                     cachebench_config["test_config"]["traceFileName"] = trace_file
                     cachebench_config["test_config"]["numOps"] = tot_req
+                    
+                    allocator_name = allocator_config["allocator"]
 
-                    uuid = f"{file_name}-{dict_hash(cachebench_config)}"
+                    uuid = f"{file_name}-{wsr}-{int(rounded_size_mb)}-{allocator_name}-{dict_hash(cachebench_config)}"
                     intended_uuids.add(uuid)
 
                     meta_config = {
@@ -229,3 +240,5 @@ def generate_configs(base_config_path="base_config.json", force_delete=False):
     print(f"Deleted obsolete configs: {deleted_confs}")
 
 generate_configs(force_delete=True)
+# cd /home/cc/CacheLib/slab-rebalance-bench/exp/prepare_exp_configs/
+# python3 gen_config_s3fifo.py
