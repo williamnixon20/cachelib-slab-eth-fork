@@ -9,10 +9,18 @@ from datetime import datetime
 
 import os
 
-multiplier = 8
-cores_per_task = 6
+multiplier = 0
+cores_per_task = 48
+MAX_CORES = 48
+
 start_core = 0 + multiplier * cores_per_task
 end_core = start_core + cores_per_task - 1
+if end_core > MAX_CORES:
+    print("Ran out of cores.")
+    exit(1)
+    
+WORK_DIR = "/home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_metakv_var_size_small"
+# WORK_DIR = "/home/cc/CacheLib/slab-rebalance-bench/exp/work_dir_metakv_var_size_small"
 # Pin master process to cores 0–3
 os.sched_setaffinity(0, {i for i in range(start_core, end_core + 1)})
 
@@ -29,7 +37,6 @@ logging.basicConfig(
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 # Configuration parameters
-WORK_DIR = "/home/cc/cachelib-1mb/slab-rebalance-bench/exp/work_dir_cluster52"
 working_on_it_file_global = "working_on_it.txt"
 def main():
     try:
@@ -46,16 +53,15 @@ def main():
             # if done_file exists, skip
             if os.path.exists(done_file):
                 logging.info(f"Skipping {subdir}: already done")
+                # See if rc.txt exists, if not then throw error
+                if not os.path.exists(rc_file):
+                    logging.error(f"ERROR: {subdir} has done.txt but no rc.txt")
                 continue
             
             # if working_on_it_file exists, skip
             if os.path.exists(working_on_it_file):
                 logging.info(f"Skipping {subdir}: already being worked on")
                 continue
-            
-            # Create a working on it file, touch
-            with open(working_on_it_file, "w") as f:
-                f.write("working\n")
                 
 
             meta_file = os.path.join(subdir, "meta.json")
@@ -64,8 +70,8 @@ def main():
                 meta_content = json.load(f)
                 mem_req_gb = float(meta_content.get("memory_requirement", 0)) / 1024.0
                 # Skip if mem_req > 1 GB
-                if mem_req_gb > 10.0:
-                    logging.info(f"Skipping {subdir}: memory requirement {mem_req_gb:.2f} GB exceeds 1 GB")
+                if mem_req_gb > 100.0:
+                    logging.info(f"Skipping {subdir}: memory requirement {mem_req_gb:.2f} GB exceeds 100 GB")
                     continue
                 
             if os.path.exists(rc_file):
@@ -78,6 +84,10 @@ def main():
             
                 logging.info(f"Re-running {subdir}: rc.txt indicates failure with code {rc_content}")
                 os.remove(rc_file)
+                
+            # Create a working on it file, touch
+            with open(working_on_it_file, "w") as f:
+                f.write("working\n")
             
             logging.info(f"Running cachebench for {subdir}")
             ret = run_cachebench(subdir, repeat=1, cores=(start_core, end_core))
@@ -100,3 +110,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# python3 /home/cc/CacheLib/slab-rebalance-bench/overhead/master/master.py
