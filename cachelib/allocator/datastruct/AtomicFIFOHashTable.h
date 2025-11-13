@@ -141,14 +141,15 @@ class AtomicFIFOHashTable {
         }
       }
 
-      printf("Original FIFO table numElem=%zu fifoSize=%zu\n", numElem_, fifoSize_);
+      // printf("Original FIFO table numElem=%zu fifoSize=%zu\n", numElem_, fifoSize_);
+      
 
       // Swap in new table
       hashTable_ = std::move(newTable);
       fifoSize_ = newFifoSizeAligned;
       numElem_ = newNumElem;
 
-      printf("Resized FIFO table to fifoSize=%zu numElem=%zu\n", fifoSize_, numElem_);
+      // printf("Resized FIFO table to fifoSize=%zu numElem=%zu\n", fifoSize_, numElem_);
     }
 
  private:
