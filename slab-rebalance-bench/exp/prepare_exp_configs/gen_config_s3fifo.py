@@ -22,17 +22,18 @@ import pandas as pd
 import os, glob, json, math, copy, itertools, subprocess
 
 dir_glob = "/home/cc/CacheLib/ftp.pdl.cmu.edu/pub/datasets/twemcacheWorkload/cacheDatasets/metaKV"
-WORK_DIR = "../work_dir_metakv_var_size_big"
+WORK_DIR = "../work_dir_metakv_var_size_alt_strategies"
 #  working_set_ratios = [0.1%, 0.3%, 1%, 3%, 10%]
 
 # working_set_ratios = [0.01]
 # working_set_ratios = [0.001, 0.003, 0.03, 0.1]
-working_set_ratios = [0.1]
+# working_set_ratios = [0.1]
+working_set_ratios = [0.001, 0.003, 0.01, 0.03, 0.1]
 # create workdir
 os.makedirs(WORK_DIR, exist_ok=True)
 
-used_allocators = ["SIMPLE2Q", "LRU2Q", "TINYLFU", "S3FIFO"]
-used_strats = ["hits", "disabled"]
+used_allocators = ["S3FIFO"]
+used_strats = ["hits-toggle", "marginal-hits-old"]
 
 # Build allocator config dicts correctly
 def make_allocator_dict(name: str):
@@ -95,7 +96,7 @@ placeholder_interval = 50_000
 
 cache_configs = {
     "marginal-hits-old": [
-        {"wakeUpRebalancerEveryXReqs": w, "mhMovingAverageParam": 0.3}
+        {"wakeUpRebalancerEveryXReqs": w, "mhMovingAverageParam": 0.3, "enableTailHitsTracking": True}
         for w in rebalance_intervals
     ],
     "marginal-hits-new": [
@@ -122,6 +123,7 @@ cache_configs = {
     "free-mem": [{"wakeUpRebalancerEveryXReqs": w} for w in rebalance_intervals],
     "eviction-rate": [{"rebalanceDiffRatio": 0.1, "wakeUpRebalancerEveryXReqs": w} for w in rebalance_intervals],
     "lama": [{"wakeUpRebalancerEveryXReqs": 1_000_000, "lamaMinThreshold": 0.00001}],
+    "hits-toggle": [{"wakeUpRebalancerEveryXReqs": w} for w in rebalance_intervals],
 }
 cache_configs = filter_cache_configs(cache_configs, set(used_strats))
 
