@@ -512,7 +512,7 @@ class CacheStressor : public Stressor {
       
 
         if ((threadIdx == 0) && (i - lastRebalanceTime_) >= (rebalanceIntervalInUse_ / config_.numThreads) && !rebalancerDisabled_) {
-          printf("Waking up rebalancer at i = %lu, interval = %lu\n", i, rebalanceIntervalInUse_);
+          // printf("Waking up rebalancer at i = %lu, interval = %lu\n", i, rebalanceIntervalInUse_);
           cache_->wakeupPoolRebalancer(syncRebalance_, i);
           lastRebalanceTime_ = i;
           //cache_->addRebalanceRequestId(i);

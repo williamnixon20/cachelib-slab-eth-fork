@@ -114,10 +114,14 @@ class MMS3FIFO {
     Config& operator=(Config&& rhs) = default;
 
     // adding extra config after generating the config: tailSize
-    void addExtraConfig(size_t tSize) { tailSize = tSize; }
+    void addExtraConfig(size_t tSize) { 
+      tailSize = tSize; 
+    }
 
+    // This one the used one
     template <typename... Args>
     void addExtraConfig(size_t tSize, Args&&...) {
+      printf("add args S3FIFO tailSize set to %zu\n", tSize);
       tailSize = tSize;
     }
 
@@ -178,6 +182,7 @@ class MMS3FIFO {
     using CompressedPtr = typename T::CompressedPtr;
     using RefFlags = typename T::Flags;
     using ADList = DList<T, HookPtr>;
+    AtomicFIFOHashTable tailHist_;
 
    public:
     Container() = default;
@@ -185,6 +190,13 @@ class MMS3FIFO {
         : // : compressor_(std::move(compressor)),
           qdlist_(std::move(compressor)),
           config_(std::move(c)) {
+          if (c.tailSize > 0) {
+            if (!tailHist_.initialized()) {
+              tailHist_.setFIFOSize(c.tailSize);
+              tailHist_.initHashtable();
+              qdlist_.setTailSize(c.tailSize);
+            }
+          }
       nextReconfigureTime_ =
           config_.mmReconfigureIntervalSecs.count() == 0
               ? std::numeric_limits<Time>::max()
@@ -200,6 +212,7 @@ class MMS3FIFO {
     uint64_t numHitsToggleTail_{0};
     uint64_t numHitsToggleSmall_{0};
     uint64_t numHitsToggleLarge_{0};
+    uint64_t numHitsShadowTail_{0};
 
     // context for iterating the MM container. At any given point of time,
     // there can be only one iterator active since we need to lock the LRU for
@@ -227,53 +240,103 @@ class MMS3FIFO {
       friend Container<T, HookPtr>;
       LockHolder l_;
 
+
+      // LockedIterator& operator++() {
+      //   // use correct list depending on fromProb_
+      //   if (counter != 0) {
+      //     printf("Iterator fwd %d\n", counter);
+      //   }
+      //   counter++;
+
+      //   ADList& list =
+      //       fromProb_ ? qdlist_->getListProbationary() : qdlist_->getListMain();
+      //   auto prevNode = list.getPrev(*candidate_);
+
+      //   while (prevNode != nullptr) {
+      //     if (!isAccessed(*prevNode) || returnAccessed_) {
+      //       candidate_ = prevNode;
+      //       return *this;
+      //     }
+      //     prevNode = list.getPrev(*prevNode);
+      //   }
+
+      //   // If reached the end of current queue, switch to the other one
+      //   printf("=======Reached the end of iterator %d! Switching queues...\n",
+      //          counter);
+      //   printf("Prob list %d, Main list %d, Total Size %d \n",
+      //          qdlist_->getListProbationary().size(),
+      //          qdlist_->getListMain().size(), qdlist_->size());
+
+      //   fromProb_ = !fromProb_; // flip the flag to switch queue
+      //   ADList& alternateQueue =
+      //       fromProb_ ? qdlist_->getListProbationary() : qdlist_->getListMain();
+      //   auto node = alternateQueue.getTail();
+
+      //   while (node != nullptr) {
+      //     if (!isAccessed(*node) || returnAccessed_) {
+      //       candidate_ = node;
+      //       return *this;
+      //     }
+      //     node = alternateQueue.getPrev(*node);
+      //   }
+
+      //   if (returnAccessed_) {
+      //     printf("Queues are empty! No more candidates to iterate\n");
+      //     exit(1);
+      //   }
+
+      //   printf(
+      //       "No more unaccessed candidates found in either queue. Will return "
+      //       "anything\n");
+      //   candidate_ = firstCandidate_;
+      //   returnAccessed_ = true;
+      //   return *this;
+      // }
+
       LockedIterator& operator++() {
-        // use correct list depending on fromProb_
         if (counter != 0) {
           printf("Iterator fwd %d\n", counter);
         }
         counter++;
 
-        ADList& list =
-            fromProb_ ? qdlist_->getListProbationary() : qdlist_->getListMain();
-        auto prevNode = list.getPrev(*candidate_);
+        // Always start from the main queue
+        ADList& mainList = qdlist_->getListMain();
+        T* prevNode = nullptr;
+        if (fromProb_) {
+          prevNode = mainList.getTail();
+        } else {
+          prevNode = mainList.getPrev(*candidate_);
+        }
 
+        // Keep iterating main queue first
         while (prevNode != nullptr) {
           if (!isAccessed(*prevNode) || returnAccessed_) {
             candidate_ = prevNode;
             return *this;
           }
-          prevNode = list.getPrev(*prevNode);
+          prevNode = mainList.getPrev(*prevNode);
         }
 
-        // If reached the end of current queue, switch to the other one
-        printf("=======Reached the end of iterator %d! Switching queues...\n",
-               counter);
-        printf("Prob list %d, Main list %d, Total Size %d \n",
-               qdlist_->getListProbationary().size(),
-               qdlist_->getListMain().size(), qdlist_->size());
-
-        fromProb_ = !fromProb_; // flip the flag to switch queue
-        ADList& alternateQueue =
-            fromProb_ ? qdlist_->getListProbationary() : qdlist_->getListMain();
-        auto node = alternateQueue.getTail();
+        ADList& smallList = qdlist_->getListProbationary();
+        auto node = smallList.getTail();
 
         while (node != nullptr) {
           if (!isAccessed(*node) || returnAccessed_) {
             candidate_ = node;
             return *this;
           }
-          node = alternateQueue.getPrev(*node);
+          node = smallList.getPrev(*node);
         }
 
+        // Both queues exhausted
         if (returnAccessed_) {
-          printf("Queues are empty! No more candidates to iterate\n");
-          exit(1);
+          printf("Queues are empty! No more candidates to iterate, reiterating.. \n");
+          candidate_ = firstCandidate_;
+          return *this;
         }
 
         printf(
-            "No more unaccessed candidates found in either queue. Will return "
-            "anything\n");
+            "No more unaccessed candidates found in either queue. Will return anything\n");
         candidate_ = firstCandidate_;
         returnAccessed_ = true;
         return *this;
@@ -313,10 +376,8 @@ class MMS3FIFO {
       }
 
       void resetToBegin() noexcept {
-        printf("Reset tobegin iterator\n");
-        if (!l_.owns_lock()) {
-          l_.lock();
-        }
+        printf("Reset tobegin iterator unimplemented\n");
+        exit(1);
       }
 
      private:
@@ -594,6 +655,11 @@ class MMS3FIFO {
       printf(
           "[RebalanceTail] grew tail by %zu, total numTail_=%u (target=%zu)\n",
           count, numTail_, nTail);
+    }
+
+    static uint32_t hashNode(const T& node) noexcept {
+      return static_cast<uint32_t>(
+          folly::hasher<folly::StringPiece>()(node.getKey()));
     }
 
     // protects all operations on the lru. We never really just read the state

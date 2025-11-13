@@ -331,8 +331,6 @@ class Cache {
 
   void wakeupPoolRebalancer(bool synchronousOp, uint64_t request_id) {
     // synchronously
-    printf("Waking up rebalancer from Cache.h\n");
-    printf("Synchronous: %d, request_id: %lu\n", synchronousOp, request_id);
     cache_->wakeupPoolRebalancer(synchronousOp, request_id);
   }
 
@@ -693,6 +691,11 @@ Cache<Allocator>::Cache(const CacheConfig& config,
   if (config_.rebalanceStrategy == "marginal-hits" ||
       config_.rebalanceStrategy == "marginal-hits-new" || config_.rebalanceStrategy == "marginal-hits-old" || config_.enableTailHitsTracking) {
         allocatorConfig_.enableTailHitsTracking();
+  }
+
+  if (config_.enableTailHitsTracking) {
+    printf("Enabling tail hits tracking\n");
+    allocatorConfig_.enableTailHitsTracking();
   }
   if (config_.rebalanceStrategy == "lama") {
     allocatorConfig_.enableFootPrintMrc = true;

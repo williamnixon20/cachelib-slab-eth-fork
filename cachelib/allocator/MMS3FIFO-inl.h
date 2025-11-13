@@ -18,6 +18,7 @@ namespace facebook {
 namespace cachelib {
 
 /* Container Interface Implementation */
+// Never called
 template <typename T, MMS3FIFO::Hook<T> T::* HookPtr>
 MMS3FIFO::Container<T, HookPtr>::Container(serialization::MMS3FIFOObject object,
                                            PtrCompressor compressor)
@@ -39,6 +40,7 @@ bool MMS3FIFO::Container<T, HookPtr>::recordAccess(T& node,
 
   const auto curr = static_cast<Time>(util::getCurrentTimeSec());
   // check if the node is still being memory managed
+
   if (node.isInMMContainer()) {
     if (!isAccessed(node)) {
       markAccessed(node);
@@ -63,7 +65,7 @@ bool MMS3FIFO::Container<T, HookPtr>::recordAccess(T& node,
       return true;
     }
     return false;
-  }
+  } 
   return false;
 }
 
@@ -81,7 +83,7 @@ MMS3FIFO::Container<T, HookPtr>::getEvictionAgeStatLocked(
     uint64_t projectedLength) const noexcept {
   EvictionAgeStat stat{};
   const auto currTime = static_cast<Time>(util::getCurrentTimeSec());
-  printf("getEvictionAgeStatLocked not implemented yet\n");
+  // printf("getEvictionAgeStatLocked not implemented yet\n");
 
   // const T* node = qdlist_.getTail();
   // stat.warmQueueStat.oldestElementAge =
@@ -120,9 +122,14 @@ bool MMS3FIFO::Container<T, HookPtr>::add(T& node) noexcept {
       return false;
     }
 
-    // qdlist_.getListProbationary().linkAtHead(node);
-    // markProbationary(node);
-    // unmarkMain(node);
+    if (tailHist_.initialized()) {
+      // Hist for tail hits tracking, different from s3fifo's ghost
+      bool containsTail = tailHist_.contains(hashNode(node));
+      if (containsTail) {
+        numHitsShadowTail_++;
+      }
+    }
+
     qdlist_.add(node);
     unmarkAccessed(node);
     node.markInMMContainer();
@@ -130,8 +137,10 @@ bool MMS3FIFO::Container<T, HookPtr>::add(T& node) noexcept {
 
     // remark tails on access. Can probably reduce the frequency of being
     // called.
-    rebalanceTail();
-
+    // if (currTime & (1 << 8)) {
+    //   printf("Rebalancing tail inside add()\n");
+    //   rebalanceTail();
+    // }
     return true;
   });
 }
@@ -160,6 +169,12 @@ void MMS3FIFO::Container<T, HookPtr>::removeLocked(T& node) noexcept {
   if (isTail(node)) {
     numTail_--;
   }
+  if (isMain(node)) {
+    // Insert to tailhist
+    if (tailHist_.initialized()) {
+      tailHist_.insert(hashNode(node));
+    }
+  } 
   unmarkProbationary(node);
   unmarkMain(node);
   unmarkAccessed(node);
@@ -241,9 +256,11 @@ MMContainerStat MMS3FIFO::Container<T, HookPtr>::getStats() const noexcept {
   });
   // printf("Num hits toggle tail: %d\n", numHitsToggleTail_);
   // printf("Num hits toggle: %d\n", numHitsToggle_);
+  // printf("Toggle shadow tail hits: %lu\n", numHitsShadowTail_);
+  // printf("config tail size: %zu\n", config_.tailSize);
   return {stat[0] /* lru size */,
           // stat[1] /* tail time */,
-          0, 0 /* refresh time */, 0, 0, 0, numHitsToggleTail_, numHitsToggle_};
+          0, 0 /* refresh time */, 0, 0, 0, numHitsShadowTail_, numHitsToggle_};
 }
 
 template <typename T, MMS3FIFO::Hook<T> T::* HookPtr>

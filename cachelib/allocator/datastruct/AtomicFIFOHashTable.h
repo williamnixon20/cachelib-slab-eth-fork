@@ -42,6 +42,8 @@ class AtomicFIFOHashTable {
     numElem_ = fifoSize_ * loadFactorInv_;
   }
 
+  int getFIFOSize() const noexcept { return fifoSize_; }
+
 
     bool contains(uint32_t key) noexcept {
     // LockHolder l(*mtx_);
@@ -98,9 +100,59 @@ class AtomicFIFOHashTable {
       // hashTable_[key % numElem_] = hashTableVal;
     }
 
+    void resizeFIFO(uint32_t newFifoSize) noexcept {
+      // Acquire lock if needed (or guarantee single-threaded access)
+      LockHolder l(*mtx_);
+
+      // Compute new sizes
+      size_t newFifoSizeAligned = ((newFifoSize >> 3) + 1) << 3;
+      size_t newNumElem = newFifoSizeAligned * loadFactorInv_;
+
+      // Allocate new table
+      auto newTable = std::unique_ptr<uint64_t[]>(new uint64_t[newNumElem]);
+      memset(newTable.get(), 0, newNumElem * sizeof(uint64_t));
+
+      // Move live entries
+      if (hashTable_) {
+        int64_t currTime = numInserts_.load();
+        for (size_t i = 0; i < numElem_; i++) {
+          uint64_t val = __atomic_load_n(&hashTable_[i], __ATOMIC_RELAXED);
+          if (val == 0)
+            continue;
+
+          // Expire old ones
+          int64_t age = currTime - getInsertionTime(val);
+          if (age > fifoSize_)
+            continue;
+
+          uint32_t key = static_cast<uint32_t>(val & keyMask_);
+          size_t newBucketIdx = (size_t)key % newNumElem;
+          newBucketIdx = newBucketIdx & bucketIdxMask_;
+
+          for (size_t j = 0; j < nItemPerBucket_; j++) {
+            uint64_t slot =
+                __atomic_load_n(&newTable[newBucketIdx + j], __ATOMIC_RELAXED);
+            if (slot == 0) {
+              __atomic_store_n(&newTable[newBucketIdx + j], val,
+                               __ATOMIC_RELAXED);
+              break;
+            }
+          }
+        }
+      }
+
+      printf("Original FIFO table numElem=%zu fifoSize=%zu\n", numElem_, fifoSize_);
+
+      // Swap in new table
+      hashTable_ = std::move(newTable);
+      fifoSize_ = newFifoSizeAligned;
+      numElem_ = newNumElem;
+
+      printf("Resized FIFO table to fifoSize=%zu numElem=%zu\n", fifoSize_, numElem_);
+    }
+
  private:
   size_t getBucketIdx(uint32_t key) {
-    // TODO: we can use & directly
     size_t bucketIdx = (size_t)key % numElem_;
     bucketIdx = bucketIdx & bucketIdxMask_;
     return bucketIdx;

@@ -51,6 +51,8 @@ class S3FIFOList {
   using RefFlags = typename T::Flags;
   using S3FIFOListObject = serialization::S3FIFOListObject;
 
+  int tailSize{0};
+
   S3FIFOList() = default;
   S3FIFOList(const S3FIFOList&) = delete;
   S3FIFOList& operator=(const S3FIFOList&) = delete;
@@ -63,6 +65,8 @@ class S3FIFOList {
     pfifo_ = std::make_unique<ADList>(compressor);
     mfifo_ = std::make_unique<ADList>(compressor);
   }
+
+  void setTailSize(int size) noexcept { tailSize = size; }
 
   // Restore S3FIFOList from saved state.
   //
@@ -152,6 +156,9 @@ class S3FIFOList {
     if (isMain(node)) {
       mfifo_->remove(node);
     } else {
+      if (hist_.initialized()) {
+        hist_.insert(hashNode(node));
+      }
       pfifo_->remove(node);
     }
   }
@@ -172,11 +179,17 @@ class S3FIFOList {
     }
 
     // ensure history initialized once
+    // Expectation: Eviction only when start to be full.
+    // OR when slab rebalance is triggered.
+    int fifoSize = listSize / 2;
     if (!hist_.initialized()) {
-      if (!hist_.initialized()) {
-        hist_.setFIFOSize(listSize / 2);
-        hist_.initHashtable();
-      }
+      printf("Initializing history table, listSize=%zu\n", listSize);
+      hist_.setFIFOSize(fifoSize);
+      hist_.initHashtable();
+    }
+
+    if (std::abs(fifoSize - hist_.getFIFOSize()) >= tailSize) {
+      hist_.resizeFIFO(fifoSize);
     }
 
     while (true) {
@@ -206,11 +219,9 @@ class S3FIFOList {
           markMain(*curr);
 
           pfifo_->remove(*curr);
-          // XDCHECK(nodeRemoved == curr);
           mfifo_->linkAtHead(*curr);
           continue; // scan again
         } else {
-          hist_.insert(hashNode(*curr));
           ref = {curr, true};
           break;
         }
@@ -218,7 +229,6 @@ class S3FIFOList {
         if (isAccessed(*curr)) {
           unmarkAccessed(*curr);
           mfifo_->remove(*curr);
-          // XDCHECK(nodeRemoved == curr);
           mfifo_->linkAtHead(*curr);
           continue;
         } else {
